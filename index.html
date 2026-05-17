@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conduit · Service Advisor Live Assist</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#070d18;
+    --bg-2:#0a1322;
+    --panel:#0c1626;
+    --panel-2:#0e1b2e;
+    --inset:#0a1424;
+    --line:#1c3252;
+    --line-soft:#152743;
+    --glow:#1e4a78;
+    --ink:#e8f2fb;
+    --ink-dim:#7d9bbd;
+    --ink-faint:#4f6f96;
+    --cyan:#38c6f4;
+    --cyan-soft:#5fb4e0;
+    --amber:#e8a23d;
+    --rec:#ef6b6b;
+    --radius:16px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Sora',sans-serif;
+    background:
+      radial-gradient(1100px 600px at 80% -5%, rgba(56,198,244,.10), transparent 55%),
+      radial-gradient(900px 600px at 0% 100%, rgba(30,74,120,.18), transparent 60%),
+      var(--bg);
+    color:var(--ink);
+    min-height:100vh;
+    padding:30px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1200px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+
+  .glass{
+    background:linear-gradient(180deg, rgba(20,40,68,.55), rgba(10,20,36,.6));
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    box-shadow:0 0 0 1px rgba(56,198,244,.04), 0 18px 50px -28px rgba(0,0,0,.8),
+               inset 0 1px 0 rgba(120,180,230,.05);
+  }
+
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:20px 26px;
+  }
+  .brand{display:flex;align-items:center;gap:14px}
+  .logo{
+    width:36px;height:36px;border-radius:10px;
+    background:linear-gradient(135deg,var(--cyan),#1c7fb0);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700;color:#04131d;font-size:18px;
+    box-shadow:0 0 22px -4px rgba(56,198,244,.6);
+  }
+  .brand h1{font-size:15px;font-weight:600;letter-spacing:.2px}
+  .brand .tag{font-size:11px;color:var(--cyan);font-weight:600;letter-spacing:1.4px;text-transform:uppercase;display:flex;align-items:center;gap:7px}
+  .brand .tag::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 8px var(--cyan)}
+
+  .timer-box{display:flex;align-items:center;gap:20px}
+  .rec{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--ink-dim);font-weight:600;letter-spacing:1px}
+  .rec-dot{width:9px;height:9px;border-radius:50%;background:var(--rec);box-shadow:0 0 0 0 rgba(239,107,107,.6);animation:pulse 1.8s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(239,107,107,.5)}70%{box-shadow:0 0 0 9px rgba(239,107,107,0)}100%{box-shadow:0 0 0 0 rgba(239,107,107,0)}}
+  .timer{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:30px;font-weight:600;letter-spacing:1px;
+    color:var(--ink);
+    background:var(--inset);
+    border:1px solid var(--line);
+    padding:8px 20px;border-radius:12px;
+    min-width:138px;text-align:center;
+    box-shadow:inset 0 0 18px -8px rgba(56,198,244,.4);
+  }
+  .timer .ms{font-size:16px;color:var(--cyan);margin-left:2px}
+
+  .grid{display:grid;grid-template-columns:1.05fr 1fr;gap:18px}
+  .card-head{
+    display:flex;align-items:center;gap:11px;
+    padding:16px 22px;border-bottom:1px solid var(--line-soft);
+  }
+  .card-head .ic{
+    width:25px;height:25px;border-radius:7px;
+    background:var(--inset);border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;font-size:13px;
+  }
+  .card-head h2{font-size:11.5px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:var(--cyan)}
+  .card-head .sub{margin-left:auto;font-size:10.5px;color:var(--ink-faint);font-family:'IBM Plex Mono',monospace;letter-spacing:.5px}
+  .card-body{padding:20px 22px;display:flex;flex-direction:column;gap:16px}
+
+  .field{display:flex;flex-direction:column;gap:5px}
+  .field label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--ink-faint);font-weight:600}
+  .field .val{font-size:14px;color:var(--ink);font-weight:500}
+  .field .val.mono{font-family:'IBM Plex Mono',monospace;letter-spacing:.5px;color:var(--cyan-soft)}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+
+  .notes{
+    background:var(--inset);border:1px solid var(--line-soft);
+    border-radius:12px;padding:15px;font-size:13px;line-height:1.7;color:var(--ink-dim);
+  }
+  .notes .live{
+    display:inline-block;font-size:10px;color:var(--cyan);
+    font-family:'IBM Plex Mono',monospace;letter-spacing:1px;margin-bottom:8px;text-transform:uppercase;
+  }
+  .notes .cursor{display:inline-block;width:7px;height:14px;background:var(--cyan);
+    vertical-align:-2px;margin-left:2px;animation:blink 1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+
+  .symptom{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line-soft)}
+  .symptom:last-child{border-bottom:none;padding-bottom:0}
+  .symptom .num{
+    width:21px;height:21px;border-radius:6px;flex-shrink:0;
+    background:rgba(56,198,244,.12);color:var(--cyan);
+    font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;
+    font-family:'IBM Plex Mono',monospace;border:1px solid rgba(56,198,244,.25);
+  }
+  .symptom p{font-size:13px;line-height:1.5;color:var(--ink)}
+  .symptom span{display:block;font-size:11.5px;color:var(--ink-faint);margin-top:3px}
+
+  .tag-section{padding:20px 24px}
+  .tag-section > .lbl{
+    font-size:11px;text-transform:uppercase;letter-spacing:1.4px;
+    color:var(--cyan);font-weight:700;margin-bottom:18px;
+    display:flex;align-items:center;gap:10px;
+  }
+  .tag-section > .lbl .check{color:var(--cyan)}
+  .tag-section > .lbl::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
+  .tag-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+  .tag-col h3{
+    font-size:11px;font-weight:600;margin-bottom:13px;
+    display:flex;align-items:center;gap:8px;letter-spacing:.6px;
+    text-transform:uppercase;color:var(--ink-dim);
+  }
+  .tag-col h3 .pip{width:8px;height:8px;border-radius:2px}
+  .pip-a{background:var(--cyan);box-shadow:0 0 7px var(--cyan)}
+  .pip-b{background:var(--amber);box-shadow:0 0 7px rgba(232,162,61,.7)}
+  .pip-c{background:var(--cyan-soft);box-shadow:0 0 7px rgba(95,180,224,.6)}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{
+    font-size:12px;padding:7px 13px;border-radius:8px;
+    font-weight:500;border:1px solid;
+    display:flex;align-items:center;gap:8px;
+    animation:pop .4s ease backwards;
+  }
+  @keyframes pop{from{opacity:0;transform:translateY(4px) scale(.96)}}
+  .chip .conf{font-family:'IBM Plex Mono',monospace;font-size:10px;opacity:.65}
+  .chip.a{background:rgba(56,198,244,.08);border-color:rgba(56,198,244,.3);color:var(--cyan-soft)}
+  .chip.b{background:rgba(232,162,61,.07);border-color:rgba(232,162,61,.28);color:var(--amber)}
+  .chip.c{background:rgba(95,180,224,.07);border-color:rgba(95,180,224,.25);color:var(--cyan-soft)}
+  .chip.manual{border-style:dashed}
+  .chip .x{
+    cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:13px;
+    line-height:1;opacity:.45;transition:.12s;margin-left:1px;
+    width:14px;height:14px;display:flex;align-items:center;justify-content:center;
+    border-radius:50%;
+  }
+  .chip:hover .x{opacity:.85}
+  .chip .x:hover{opacity:1;background:rgba(239,107,107,.18);color:var(--rec)}
+  .chip.removing{animation:fade .2s ease forwards}
+  @keyframes fade{to{opacity:0;transform:scale(.85);margin:0;padding:0;width:0;border:0}}
+  .add-tag{
+    display:flex;align-items:center;gap:6px;
+    background:transparent;border:1px dashed var(--line);
+    border-radius:8px;padding:6px 10px;transition:.12s;
+  }
+  .add-tag:focus-within{border-color:var(--cyan);box-shadow:0 0 12px -4px rgba(56,198,244,.5)}
+  .add-tag .plus{color:var(--ink-faint);font-size:14px;font-weight:600;line-height:1}
+  .add-tag input{
+    background:transparent;border:none;outline:none;
+    color:var(--ink);font-family:'Sora',sans-serif;font-size:12px;
+    width:84px;
+  }
+  .add-tag input::placeholder{color:var(--ink-faint)}
+  .edit-note{
+    font-size:10.5px;color:var(--ink-faint);font-family:'IBM Plex Mono',monospace;
+    margin-left:auto;display:flex;align-items:center;gap:6px;letter-spacing:.3px;
+  }
+  .edit-note::before{content:'✎';color:var(--cyan);opacity:.7}
+
+  .quote-head{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:18px 26px;border-bottom:1px solid var(--line-soft);
+  }
+  .quote-head .left{display:flex;align-items:center;gap:12px}
+  .quote-head .badge{
+    font-size:11px;font-family:'IBM Plex Mono',monospace;letter-spacing:1px;
+    color:var(--cyan);font-weight:600;text-transform:uppercase;
+  }
+  .quote-head .est{font-size:11px;color:var(--ink-faint);font-family:'IBM Plex Mono',monospace}
+  .quote-table{padding:6px 26px 12px}
+  .qhead{
+    display:grid;grid-template-columns:1.4fr 2fr .6fr .8fr .9fr;gap:14px;
+    padding:14px 0 12px;font-size:10px;text-transform:uppercase;letter-spacing:1px;
+    color:var(--ink-faint);font-weight:600;border-bottom:1px solid var(--line-soft);
+  }
+  .qhead .r,.qline .r{text-align:right}
+  .qline{
+    display:grid;grid-template-columns:1.4fr 2fr .6fr .8fr .9fr;gap:14px;
+    align-items:center;padding:14px 0;border-bottom:1px solid var(--line-soft);
+    font-size:13px;
+  }
+  .qline .part{font-family:'IBM Plex Mono',monospace;color:var(--cyan-soft);font-size:12.5px}
+  .qline .desc{color:var(--ink)}
+  .qline .desc span{display:block;font-size:11px;color:var(--ink-faint);margin-top:3px}
+  .qline .mono{font-family:'IBM Plex Mono',monospace;color:var(--ink-dim)}
+  .qline .amt{font-family:'IBM Plex Mono',monospace;color:var(--ink);font-weight:600;text-align:right}
+  .qline.disc .amt{color:var(--amber)}
+  .qline.disc .desc{color:var(--amber)}
+  .quote-total{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:20px 26px;border-top:1px solid var(--line);
+    background:linear-gradient(180deg, transparent, rgba(56,198,244,.04));
+  }
+  .quote-total .meta{font-size:11.5px;color:var(--ink-faint);line-height:1.7}
+  .quote-total .meta b{color:var(--ink-dim);font-weight:500}
+  .quote-total .grand{text-align:right}
+  .quote-total .grand .lab{font-size:10.5px;text-transform:uppercase;letter-spacing:1.2px;color:var(--ink-faint)}
+  .quote-total .grand .num{
+    font-family:'IBM Plex Mono',monospace;font-size:34px;font-weight:700;
+    color:var(--cyan);margin-top:4px;text-shadow:0 0 24px rgba(56,198,244,.45);
+  }
+  .quote-actions{display:flex;gap:10px;padding:0 26px 24px}
+  .btn{
+    flex:1;padding:13px;border-radius:11px;font-family:'Sora',sans-serif;
+    font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--line);
+    background:var(--inset);color:var(--ink-dim);transition:.15s;
+  }
+  .btn:hover{border-color:var(--cyan);color:var(--ink)}
+  .btn.primary{
+    background:linear-gradient(135deg,var(--cyan),#1c8cc0);color:#04131d;
+    border-color:var(--cyan);box-shadow:0 0 24px -6px rgba(56,198,244,.6);
+  }
+  .btn.primary:hover{filter:brightness(1.1)}
+
+  .foot{text-align:center;font-size:11px;color:var(--ink-faint);font-family:'IBM Plex Mono',monospace;padding-top:4px}
+
+  @media(max-width:900px){
+    .grid{grid-template-columns:1fr}
+    .tag-cols{grid-template-columns:1fr}
+    .qhead,.qline{grid-template-columns:1fr 1fr}
+    .qhead .r3,.qline .c3{display:none}
+    body{padding:16px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar glass">
+    <div class="brand">
+      <div class="logo">C</div>
+      <div>
+        <h1>Service Advisor — Live Assist</h1>
+        <span class="tag">Conduit Decision OS · listening</span>
+      </div>
+    </div>
+    <div class="timer-box">
+      <div class="rec"><span class="rec-dot"></span> CALL ACTIVE</div>
+      <div class="timer">07:42<span class="ms">.3</span></div>
+    </div>
+  </div>
+
+  <div class="grid">
+
+    <div class="glass">
+      <div class="card-head">
+        <div class="ic">🚗</div>
+        <h2>Vehicle &amp; Customer</h2>
+        <span class="sub">auto-filled · 0.3s</span>
+      </div>
+      <div class="card-body">
+        <div class="row2">
+          <div class="field"><label>Customer</label><div class="val">Dana Whitfield</div></div>
+          <div class="field"><label>Phone</label><div class="val mono">(970) 555·0148</div></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Year / Make / Model</label><div class="val">2019 Subaru Outback</div></div>
+          <div class="field"><label>Mileage</label><div class="val mono">84,210 mi</div></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>VIN</label><div class="val mono">4S4BSANC…7H3</div></div>
+          <div class="field"><label>Plate</label><div class="val mono">CO · 8KQ-2291</div></div>
+        </div>
+        <div class="field">
+          <label>Repair Request</label>
+          <div class="val">Brake noise + scheduled 85k service inspection</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="glass">
+      <div class="card-head">
+        <div class="ic">🩺</div>
+        <h2>Symptoms &amp; Clarifications</h2>
+        <span class="sub">3 detected</span>
+      </div>
+      <div class="card-body">
+        <div>
+          <div class="symptom">
+            <div class="num">1</div>
+            <div><p>Grinding noise from front-left when braking</p>
+            <span>Worse at low speed · started ~2 weeks ago</span></div>
+          </div>
+          <div class="symptom">
+            <div class="num">2</div>
+            <div><p>Steering wheel vibration above 60 mph</p>
+            <span>Intermittent · customer unsure if related</span></div>
+          </div>
+          <div class="symptom">
+            <div class="num">3</div>
+            <div><p>Soft brake pedal feel</p>
+            <span>Advisor flagged for fluid check</span></div>
+          </div>
+        </div>
+        <div class="notes">
+          <span class="live">◦ Advisor Notes — transcribing</span><br>
+          Customer commutes daily on I-25, ~40 mi each way. Wants it
+          ready by Friday. Mentioned no warning lights on dash. Prefers
+          a call before any work over $400<span class="cursor"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="glass tag-section">
+    <div class="lbl">
+      <span class="check">✓</span> Extracted &amp; Matched · Conduit NLP — 0.3s
+      <span class="edit-note">advisor can correct vehicle &amp; symptom tags</span>
+    </div>
+    <div class="tag-cols">
+
+      <div class="tag-col">
+        <h3><span class="pip pip-a"></span> General Vehicle</h3>
+        <div class="chips" id="chips-a">
+          <span class="chip a" style="animation-delay:.05s">Subaru <span class="conf">0.99</span><span class="x" title="Remove">×</span></span>
+          <span class="chip a" style="animation-delay:.1s">Outback <span class="conf">0.98</span><span class="x" title="Remove">×</span></span>
+          <span class="chip a" style="animation-delay:.15s">2019 <span class="conf">0.97</span><span class="x" title="Remove">×</span></span>
+          <span class="chip a" style="animation-delay:.2s">AWD <span class="conf">0.91</span><span class="x" title="Remove">×</span></span>
+          <span class="chip a" style="animation-delay:.25s">84k mi <span class="conf">0.95</span><span class="x" title="Remove">×</span></span>
+          <span class="add-tag"><span class="plus">+</span><input type="text" data-cat="a" placeholder="add tag" /></span>
+        </div>
+      </div>
+
+      <div class="tag-col">
+        <h3><span class="pip pip-b"></span> Repair / Symptom</h3>
+        <div class="chips" id="chips-b">
+          <span class="chip b" style="animation-delay:.1s">Brake grind <span class="conf">0.96</span><span class="x" title="Remove">×</span></span>
+          <span class="chip b" style="animation-delay:.15s">Front-left <span class="conf">0.93</span><span class="x" title="Remove">×</span></span>
+          <span class="chip b" style="animation-delay:.2s">Wheel vibration <span class="conf">0.88</span><span class="x" title="Remove">×</span></span>
+          <span class="chip b" style="animation-delay:.25s">Soft pedal <span class="conf">0.84</span><span class="x" title="Remove">×</span></span>
+          <span class="chip b" style="animation-delay:.3s">85k service <span class="conf">0.92</span><span class="x" title="Remove">×</span></span>
+          <span class="add-tag"><span class="plus">+</span><input type="text" data-cat="b" placeholder="add tag" /></span>
+        </div>
+      </div>
+
+      <div class="tag-col">
+        <h3><span class="pip pip-c"></span> Advisor Notes</h3>
+        <div class="chips">
+          <span class="chip c" style="animation-delay:.15s">Due Friday <span class="conf">0.90</span></span>
+          <span class="chip c" style="animation-delay:.2s">Approve &gt;$400 <span class="conf">0.87</span></span>
+          <span class="chip c" style="animation-delay:.25s">No dash lights <span class="conf">0.94</span></span>
+          <span class="chip c" style="animation-delay:.3s">Daily driver <span class="conf">0.89</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="glass">
+    <div class="quote-head">
+      <div class="left">
+        <span class="badge">📋 QUOTE #Q-2026-0441</span>
+      </div>
+      <span class="est">generated from extracted tags · draft</span>
+    </div>
+    <div class="quote-table">
+      <div class="qhead">
+        <div>Part</div><div>Desc</div><div class="r c3">Qty</div><div class="r r3">Rate</div><div class="r">Total</div>
+      </div>
+      <div class="qline">
+        <div class="part">BRK-FR-PR</div>
+        <div class="desc">Front pads &amp; rotors — replace<span>OEM-equivalent · front axle</span></div>
+        <div class="mono r c3">1</div>
+        <div class="mono r r3">2.4 hr</div>
+        <div class="amt">$486.00</div>
+      </div>
+      <div class="qline">
+        <div class="part">BRK-FLSH</div>
+        <div class="desc">Brake fluid flush &amp; bleed<span>Addresses soft pedal symptom</span></div>
+        <div class="mono r c3">1</div>
+        <div class="mono r r3">0.8 hr</div>
+        <div class="amt">$129.00</div>
+      </div>
+      <div class="qline">
+        <div class="part">SVC-85K</div>
+        <div class="desc">85k mile scheduled inspection<span>Multi-point + tire balance</span></div>
+        <div class="mono r c3">1</div>
+        <div class="mono r r3">1.5 hr</div>
+        <div class="amt">$240.00</div>
+      </div>
+      <div class="qline">
+        <div class="part">DIAG-VIB</div>
+        <div class="desc">Diagnostic — highway vibration<span>Flagged, pending approval</span></div>
+        <div class="mono r c3">1</div>
+        <div class="mono r r3">1.0 hr</div>
+        <div class="amt">$110.00</div>
+      </div>
+      <div class="qline disc">
+        <div class="part">—</div>
+        <div class="desc">Returning-customer discount (8%)</div>
+        <div class="mono r c3"></div>
+        <div class="mono r r3"></div>
+        <div class="amt">−$76.40</div>
+      </div>
+    </div>
+    <div class="quote-total">
+      <div class="meta">
+        <b>Parts</b> $612.00 &nbsp;·&nbsp; <b>Labor</b> $463.00 &nbsp;·&nbsp; <b>Tax</b> $90.00<br>
+        Estimate valid 14 days · subject to inspection findings
+      </div>
+      <div class="grand">
+        <div class="lab">Estimated Total</div>
+        <div class="num">$1,088.60</div>
+      </div>
+    </div>
+    <div class="quote-actions">
+      <button class="btn">Edit line items</button>
+      <button class="btn">Save draft</button>
+      <button class="btn primary">Send quote to customer</button>
+    </div>
+  </div>
+
+  <div class="foot">Conduit Decision OS · prototype mockup · no live data</div>
+
+</div>
+
+<script>
+  let t = 462.3;
+  const el = document.querySelector('.timer');
+  setInterval(()=>{
+    t += 0.1;
+    const m = String(Math.floor(t/60)).padStart(2,'0');
+    const s = String(Math.floor(t%60)).padStart(2,'0');
+    const ms = Math.floor((t*10)%10);
+    el.innerHTML = `${m}:${s}<span class="ms">.${ms}</span>`;
+  },100);
+
+  // ---- Editable tags: remove ----
+  document.addEventListener('click', e=>{
+    if(!e.target.classList.contains('x')) return;
+    const chip = e.target.closest('.chip');
+    chip.classList.add('removing');
+    setTimeout(()=>chip.remove(), 200);
+  });
+
+  // ---- Editable tags: add (Enter to commit) ----
+  document.querySelectorAll('.add-tag input').forEach(input=>{
+    input.addEventListener('keydown', e=>{
+      if(e.key!=='Enter') return;
+      const txt = input.value.trim();
+      if(!txt) return;
+      const cat = input.dataset.cat;            // 'a' or 'b'
+      const wrap = input.closest('.add-tag');
+      const chip = document.createElement('span');
+      chip.className = 'chip '+cat+' manual';
+      // manual tags carry a "MANUAL" marker instead of a confidence score
+      chip.innerHTML = txt.replace(/</g,'&lt;') +
+        ' <span class="conf">MANUAL</span><span class="x" title="Remove">×</span>';
+      wrap.parentNode.insertBefore(chip, wrap);  // keep the input last
+      input.value='';
+    });
+  });
+</script>
+</body>
+</html>
